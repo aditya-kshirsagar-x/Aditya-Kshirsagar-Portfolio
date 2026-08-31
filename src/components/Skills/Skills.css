@@ -1,0 +1,709 @@
+/* =========================================================
+   SKILLS SECTION — premium glass / 3D-tilt technical showcase
+   Color system: bg #050505 · primary #FFFFFF · muted #9CA3AF
+   Accent #00E5FF · secondary #7C6FFF (used sparingly, atmosphere only)
+
+   Performance notes:
+   - Only transform / opacity / border-color / color are ever
+     transitioned or animated. No filter, backdrop-filter, box-shadow
+     size, or layout-property (width/top/margin) animation anywhere.
+   - The section-level grid texture lives entirely on ::before of
+     .skills-section itself — it never masks or repaints content.
+   - will-change only switches on during the hover/focus interaction
+     for cards; reveal elements carry it only while animating.
+   - 3D tilt, pointer light and cursor-follow effects are fully
+     disabled on coarse pointers / touch / prefers-reduced-motion.
+   - Pointer bounds are cached once per hover session in the JSX
+     (useSurfaceInteraction) — this file only ever reads --rx/--ry/
+     --mx/--my, it never recalculates layout itself.
+   ========================================================= */
+
+.skills-section {
+  position: relative;
+  background: #050505;
+  color: #ffffff;
+  padding: 7rem 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ---------- cinematic static atmosphere (no repaint loop, no masking
+   of real content — lives entirely behind everything on its own layer) ---------- */
+
+.skills-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle 550px at 50% -8%, rgba(0, 229, 255, 0.07), transparent 62%),
+    radial-gradient(circle 480px at 108% 110%, rgba(124, 111, 255, 0.05), transparent 65%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: auto, auto, 64px 64px, 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% 20%, black, transparent 75%);
+  mask-image: radial-gradient(ellipse 85% 65% at 50% 20%, black, transparent 75%);
+}
+
+.skills-container {
+  position: relative;
+  z-index: 1;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+/* ---------- header ---------- */
+
+.skills-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #00e5ff;
+  margin-bottom: 1.1rem;
+}
+
+.skills-heading,
+.projects-heading {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 1.25rem;
+}
+
+.projects-heading {
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  margin-bottom: 0.75rem;
+}
+
+.skills-subtitle {
+  max-width: 38rem;
+  color: #9ca3af;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.core-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+}
+
+.core-stack li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: color 0.25s ease;
+}
+
+.core-stack li:hover {
+  color: #00e5ff;
+}
+
+.core-stack-sep {
+  color: #00e5ff;
+  opacity: 0.55;
+}
+
+.projects-header {
+  margin-top: 6rem;
+  margin-bottom: 3rem;
+}
+
+/* ---------------------------------------------------------------------
+   CINEMATIC SCROLL REVEAL — fully reversible, no flicker
+   ---------------------------------------------------------------------
+   The JSX toggles `.is-visible` on `.reveal` based on
+   `entry.isIntersecting` directly (see useRevealOnScroll), so it
+   naturally flips both ways — scroll down reveals, scroll up reverses,
+   with zero extra logic here. Because this uses plain CSS transitions
+   (never `animation` / `animation-fill-mode: forwards`), the reverse
+   is smooth and automatic.
+
+   Each child gets a tiny built-in stagger via nth-child so cards enter
+   as a wave rather than all at once. The JSX also sets an inline
+   `transition-delay` per card (index * 70ms / 90ms) — inline style
+   always wins over a stylesheet rule at equal specificity, so this
+   nth-child stagger is just a safe fallback for any reveal group that
+   doesn't set its own delay.
+   ------------------------------------------------------------------- */
+
+.reveal > * {
+  opacity: 0;
+  transform: perspective(900px) translate3d(0, 32px, 0) scale(0.965) rotateX(4deg);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.reveal > *:nth-child(1) { transition-delay: 0ms; }
+.reveal > *:nth-child(2) { transition-delay: 80ms; }
+.reveal > *:nth-child(3) { transition-delay: 160ms; }
+.reveal > *:nth-child(4) { transition-delay: 240ms; }
+.reveal > *:nth-child(n+5) { transition-delay: 300ms; }
+
+.reveal.is-visible > * {
+  opacity: 1;
+  transform: perspective(900px) translate3d(0, 0, 0) scale(1) rotateX(0deg);
+}
+
+/* ---------- skill grid / cards ---------- */
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .skills-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.skill-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  padding: 2rem;
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 50px -25px rgba(0, 0, 0, 0.7);
+  transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) translate3d(0, 0, 0);
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s ease,
+              box-shadow 0.4s ease;
+  overflow: hidden;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .skill-card {
+    background: linear-gradient(180deg, rgba(15, 16, 17, 0.95), rgba(9, 10, 11, 0.93));
+  }
+}
+
+/* thin glass edge highlight — static, decorative, no animation */
+.skill-card::before {
+  content: "";
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* liquid pointer light — the real .skill-card-spotlight DOM node the
+   JSX renders, driven purely by --mx/--my. Opacity/transform only. */
+.skill-card-spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(320px circle at var(--mx) var(--my), rgba(0, 229, 255, 0.12), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.skill-card:hover,
+.skill-card:focus-within {
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 30px 60px -25px rgba(0, 229, 255, 0.14);
+  will-change: transform;
+  transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-4px) scale(1.008) translate3d(0, 0, 0);
+}
+
+.skill-card:hover .skill-card-spotlight,
+.skill-card:focus-within .skill-card-spotlight {
+  opacity: 1;
+}
+
+.skill-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+  transform: translateZ(16px);
+}
+
+.skill-card-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  color: #00e5ff;
+  letter-spacing: 0.05em;
+}
+
+.skill-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.skill-card-desc {
+  position: relative;
+  color: #9ca3af;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  max-width: 26rem;
+  transform: translateZ(12px);
+}
+
+.skill-card-list {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
+  transform: translateZ(10px);
+}
+
+.skill-card-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.skill-card-signal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #00e5ff;
+}
+
+.signal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #00e5ff;
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+/* lightweight pulse — opacity + transform only, no shadow expansion */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+
+/* corner brackets — the section's recurring signature detail */
+
+.corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(0, 229, 255, 0.3);
+  opacity: 0.5;
+  transition: opacity 0.35s ease, border-color 0.35s ease;
+  pointer-events: none;
+}
+
+.group:hover .corner,
+.skill-card:hover .corner,
+.skill-card:focus-within .corner {
+  opacity: 1;
+  border-color: rgba(0, 229, 255, 0.75);
+}
+
+.corner-tl { top: 10px; left: 10px; border-top: 1px solid; border-left: 1px solid; }
+.corner-tr { top: 10px; right: 10px; border-top: 1px solid; border-right: 1px solid; }
+.corner-bl { bottom: 10px; left: 10px; border-bottom: 1px solid; border-left: 1px solid; }
+.corner-br { bottom: 10px; right: 10px; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* ---------- tech tags (micro-interaction) ---------- */
+
+.tech-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: #d1d5db;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.85rem;
+  cursor: default;
+  transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease;
+}
+
+.tech-tag:hover,
+.tech-tag:focus-visible {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.45);
+  background: rgba(0, 229, 255, 0.06);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.tech-tag-note {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  max-width: 14rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: #050505;
+  background: #00e5ff;
+  padding: 0.32rem 0.6rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 8px 20px -8px rgba(0, 229, 255, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 5;
+}
+
+.tech-tag:hover .tech-tag-note,
+.tech-tag:focus-visible .tech-tag-note {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* keep tooltips from clipping off-screen near the section edges */
+.skill-card-list li:first-child .tech-tag-note {
+  left: 0;
+  transform: translateX(0) translateY(4px);
+}
+
+.skill-card-list li:first-child .tech-tag:hover .tech-tag-note,
+.skill-card-list li:first-child .tech-tag:focus-visible .tech-tag-note {
+  transform: translateX(0) translateY(0);
+}
+
+.skill-card-list li:last-child .tech-tag-note {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(4px);
+}
+
+.skill-card-list li:last-child .tech-tag:hover .tech-tag-note,
+.skill-card-list li:last-child .tech-tag:focus-visible .tech-tag-note {
+  transform: translateX(0) translateY(0);
+}
+
+/* ---------- project grid / cards ---------- */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .project-card-featured {
+    grid-column: span 2;
+  }
+  .project-card-featured .project-media {
+    aspect-ratio: 21 / 9;
+  }
+}
+
+.project-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 20px 50px -28px rgba(0, 0, 0, 0.7);
+  transform: perspective(1200px) rotateX(var(--rx)) rotateY(var(--ry)) translate3d(0, 0, 0);
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.45s ease,
+              box-shadow 0.45s ease;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .project-card {
+    background: rgba(10, 11, 12, 0.92);
+  }
+}
+
+.project-card-featured {
+  border-color: rgba(0, 229, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.06), 0 20px 50px -28px rgba(0, 0, 0, 0.7);
+}
+
+.project-card-featured:hover,
+.project-card-featured:focus-within {
+  border-color: rgba(0, 229, 255, 0.55);
+}
+
+.project-card:hover,
+.project-card:focus-within {
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 30px 70px -30px rgba(0, 229, 255, 0.16);
+  will-change: transform;
+  transform: perspective(1200px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-3px) scale(1.006) translate3d(0, 0, 0);
+}
+
+.project-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: linear-gradient(160deg, #0d0d0d, #050505);
+}
+
+.project-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-card:hover .project-image,
+.project-card:focus-within .project-image {
+  transform: scale(1.04);
+}
+
+.project-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  color: rgba(156, 163, 175, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.1), rgba(124, 111, 255, 0.07)),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 40px);
+}
+
+.project-media-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 5, 5, 0) 40%, rgba(5, 5, 5, 0.85) 100%),
+    radial-gradient(60% 60% at var(--mx) var(--my), rgba(0, 229, 255, 0.12), transparent 70%);
+  opacity: 0.85;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.project-card:hover .project-media-overlay,
+.project-card:focus-within .project-media-overlay {
+  opacity: 1;
+}
+
+.project-body {
+  padding: 1.75rem;
+}
+
+.project-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+
+.project-card:hover .project-title,
+.project-card:focus-within .project-title {
+  color: #00e5ff;
+}
+
+.project-summary {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin-bottom: 1.1rem;
+}
+
+.project-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: #d1d5db;
+}
+
+.project-stack li {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.project-card:hover .project-stack li {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  transition: color 0.3s ease;
+}
+
+.project-link:hover,
+.project-link:focus-visible {
+  color: #00e5ff;
+}
+
+.project-link-disabled {
+  color: #6b7280;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.project-link-arrow {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-card:hover .project-link-arrow,
+.project-card:focus-within .project-link-arrow,
+.project-link:hover .project-link-arrow,
+.project-link:focus-visible .project-link-arrow {
+  transform: translateX(4px);
+}
+
+/* ---------- accessibility ---------- */
+
+.skill-card:focus-visible,
+.project-card:focus-visible,
+.project-link:focus-visible,
+.tech-tag:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-card,
+  .project-card,
+  .project-image,
+  .project-link-arrow,
+  .project-title,
+  .project-media-overlay,
+  .tech-tag,
+  .core-stack li,
+  .corner,
+  .reveal > * {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+
+  .skill-card:hover,
+  .project-card:hover,
+  .skill-card:focus-within,
+  .project-card:focus-within {
+    transform: none !important;
+  }
+
+  .signal-dot {
+    animation: none !important;
+  }
+
+  .reveal > * {
+    opacity: 1 !important;
+  }
+}
+
+/* ---------- coarse pointer / touch: disable 3D + pointer-light,
+   keep glass, spacing, content, and tap feedback ---------- */
+
+@media (hover: none), (pointer: coarse) {
+  .skill-card,
+  .project-card {
+    transform: none !important;
+  }
+
+  .skill-card:hover,
+  .skill-card:focus-within,
+  .project-card:hover,
+  .project-card:focus-within {
+    transform: none !important;
+  }
+
+  .skill-card-spotlight {
+    display: none;
+  }
+
+  .project-media-overlay {
+    opacity: 1;
+  }
+
+  .project-card:hover .project-image,
+  .project-card:focus-within .project-image {
+    transform: none;
+  }
+
+  .skill-card,
+  .project-card {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* keep the reveal entrance on touch, just simplify the tilt */
+  .reveal > * {
+    transform: translate3d(0, 24px, 0) scale(0.98);
+  }
+
+  .reveal.is-visible > * {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* ---------- low-end / narrow viewport: lighten the render path
+   further while keeping every card, image and link intact ---------- */
+
+@media (max-width: 480px) {
+  .skills-section { padding: 4.5rem 1.25rem; }
+  .skills-section::before { display: none; }
+  .skill-card { padding: 1.5rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .project-body { padding: 1.35rem; }
+  .project-card { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+}
