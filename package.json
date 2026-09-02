@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://aditya-kshirsagar-x.github.io/aditya-portfolio",
+  "homepage": "https://aditya-kshirsagar-x.github.io/Aditya-Kshirsagar-Portfolio",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
