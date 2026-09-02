@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './skills.css';
-
 /* ------------------------------------------------------------------ */
 /*  DATA — edit here only. Everything below reads from these arrays.  */
 /* ------------------------------------------------------------------ */
