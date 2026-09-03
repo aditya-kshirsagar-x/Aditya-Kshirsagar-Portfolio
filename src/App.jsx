@@ -3,8 +3,9 @@ import { useState } from 'react';
 import UplinkLoader from './components/UplinkLoader';
 import Navbar from './components/Navbar';
 import Projects from './components/Projects';
-import Skills from './components/Skills/Skills';
 import Contact from './components/Contact';
+import Skills from './components/Skills';
+
 
 import Home from './pages/Home';
 import About from './pages/About';
