@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 permissions:
@@ -12,15 +13,16 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
   build:
+    name: Build React Portfolio
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -32,18 +34,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React application
+      - name: Build Vite application
         run: npm run build
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload dist folder
+      - name: Upload production build
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
   deploy:
+    name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
 
@@ -52,6 +55,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
