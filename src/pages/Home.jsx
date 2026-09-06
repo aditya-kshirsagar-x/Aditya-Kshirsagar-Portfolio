@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HomeImage from '../assets/Home.jpeg';
+import ShinyText from '../components/ShinyText';
 
 export default function Home() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -96,14 +97,21 @@ export default function Home() {
                     className={`text-center mb-8 md:mb-10 transform transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                         }`}
                 >
+                    {/* फ़ॉन्ट साइज़ को छोटा और प्रोफ़ेशनल किया गया है (text-base sm:text-lg md:text-xl lg:text-2xl) */}
                     <h1
-                        className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-white leading-tight uppercase"
+                        className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight text-white leading-tight uppercase"
                         style={{
                             letterSpacing: '0.04em',
                             textShadow: '0 2px 20px rgba(255, 255, 255, 0.15)',
                         }}
                     >
-                        ADITYA DASHARATH KSHIRSAGAR
+                        <ShinyText
+                            text="ADITYA DASHARATH KSHIRSAGAR"
+                            disabled={false}
+                            speed={3}
+                            color="#b5b5b5"
+                            shineColor="#ffffff"
+                        />
                     </h1>
                     <div className="mx-auto w-16 md:w-24 h-0.5 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent mt-3 opacity-80" />
                 </div>
