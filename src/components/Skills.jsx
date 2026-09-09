@@ -370,19 +370,134 @@ function SkillCategoryCard({ group, index, interactionsDisabled }) {
     );
 }
 
-function ProjectImage({ image, alt }) {
+/* ------------------------------------------------------------------ */
+/*  PROJECT PREVIEW — representational graphics                       */
+/* ------------------------------------------------------------------ */
+/*
+ * These are lightweight, hand-drawn SVG diagrams — never fake
+ * screenshots — used only when a project's real image is missing or
+ * fails to load. Each one is a restrained monochrome schematic keyed to
+ * that project's own (already-existing) stack/architecture, with a
+ * single small teal accent. All motion on these graphics is opacity /
+ * transform only, and is fully disabled under prefers-reduced-motion.
+ */
+
+/** Client-server chat: a hub node with connected peers + one active link. */
+function ClientServerGraphic() {
+    return (
+        <svg viewBox="0 0 200 130" width="100%" height="100%" focusable="false" aria-hidden="true">
+            <g stroke="rgba(255,255,255,0.22)" strokeWidth="1" fill="none">
+                <line x1="100" y1="65" x2="34" y2="24" />
+                <line x1="100" y1="65" x2="34" y2="106" />
+                <line x1="100" y1="65" x2="166" y2="24" />
+                <line x1="100" y1="65" x2="166" y2="106" strokeDasharray="3 4" />
+            </g>
+            <circle cx="100" cy="65" r="11" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.42)" strokeWidth="1.2" />
+            <circle cx="100" cy="65" r="3.2" fill="rgba(255,255,255,0.55)" />
+            <circle cx="34" cy="24" r="5" fill="rgba(255,255,255,0.32)" />
+            <circle cx="34" cy="106" r="5" fill="rgba(255,255,255,0.32)" />
+            <circle cx="166" cy="24" r="5" fill="rgba(255,255,255,0.32)" />
+            <circle className="preview-accent" cx="166" cy="106" r="5" fill="#7fe3d9" />
+        </svg>
+    );
+}
+
+/** Campus dashboard: a grid of panels, one accented, echoing a layout of info blocks. */
+function DashboardGraphic() {
+    return (
+        <svg viewBox="0 0 200 130" width="100%" height="100%" focusable="false" aria-hidden="true">
+            <rect x="18" y="18" width="70" height="42" rx="3" stroke="rgba(255,255,255,0.24)" fill="rgba(255,255,255,0.035)" />
+            <rect x="98" y="18" width="84" height="18" rx="3" stroke="rgba(255,255,255,0.2)" fill="rgba(255,255,255,0.03)" />
+            <rect className="preview-accent" x="98" y="42" width="84" height="18" rx="3" stroke="rgba(127,227,217,0.5)" fill="rgba(127,227,217,0.06)" />
+            <rect x="18" y="70" width="164" height="42" rx="3" stroke="rgba(255,255,255,0.18)" fill="rgba(255,255,255,0.025)" />
+            <line x1="30" y1="91" x2="66" y2="91" stroke="rgba(255,255,255,0.3)" />
+            <line x1="76" y1="91" x2="102" y2="91" stroke="rgba(255,255,255,0.18)" />
+            <line x1="112" y1="91" x2="150" y2="91" stroke="rgba(255,255,255,0.18)" />
+        </svg>
+    );
+}
+
+/** Hostel management: a records cylinder feeding a set of structured row entries. */
+function RecordsGraphic() {
+    return (
+        <svg viewBox="0 0 200 130" width="100%" height="100%" focusable="false" aria-hidden="true">
+            <ellipse cx="44" cy="30" rx="24" ry="8" stroke="rgba(255,255,255,0.32)" fill="rgba(255,255,255,0.04)" />
+            <path
+                d="M20 30 v40 a24 8 0 0 0 48 0 v-40"
+                stroke="rgba(255,255,255,0.24)"
+                fill="rgba(255,255,255,0.02)"
+            />
+            <line x1="20" y1="50" x2="68" y2="50" stroke="rgba(255,255,255,0.15)" />
+            <g stroke="rgba(255,255,255,0.22)" fill="none">
+                <rect x="96" y="20" width="86" height="13" rx="2" />
+                <rect x="96" y="40" width="86" height="13" rx="2" />
+                <rect className="preview-accent" x="96" y="60" width="58" height="13" rx="2" stroke="rgba(127,227,217,0.55)" />
+            </g>
+        </svg>
+    );
+}
+
+/** Content / e-learning: layered course blocks, one module highlighted. */
+function ContentGraphic() {
+    return (
+        <svg viewBox="0 0 200 130" width="100%" height="100%" focusable="false" aria-hidden="true">
+            <rect x="18" y="18" width="164" height="26" rx="3" stroke="rgba(255,255,255,0.26)" fill="rgba(255,255,255,0.035)" />
+            <rect x="18" y="54" width="102" height="20" rx="3" stroke="rgba(255,255,255,0.2)" fill="rgba(255,255,255,0.03)" />
+            <rect className="preview-accent" x="128" y="54" width="54" height="20" rx="3" stroke="rgba(127,227,217,0.5)" fill="rgba(127,227,217,0.06)" />
+            <rect x="18" y="84" width="164" height="28" rx="3" stroke="rgba(255,255,255,0.16)" fill="rgba(255,255,255,0.02)" />
+        </svg>
+    );
+}
+
+const PREVIEW_GRAPHICS = {
+    'client-server-chat': ClientServerGraphic,
+    'smart-campus': DashboardGraphic,
+    'smart-hostel': RecordsGraphic,
+    'portfolio-elearning': ContentGraphic,
+};
+
+/**
+ * The premium representational preview shown when a project has no real
+ * image (or the image fails to load). Built entirely from the project's
+ * own existing data — title, type, id, stack — never invented content.
+ */
+function ProjectPreviewFallback({ project, label }) {
+    const Graphic = PREVIEW_GRAPHICS[project.id] || ClientServerGraphic;
+
+    return (
+        <div className="project-preview-fallback" role="img" aria-label={label}>
+            <div className="project-preview-graphic">
+                <Graphic />
+            </div>
+            <div className="project-preview-meta" aria-hidden="true">
+                <div className="project-preview-toprow">
+                    <span className="project-preview-kicker">Project Preview</span>
+                    <span className="project-preview-status">
+                        <span className="project-preview-dot" />
+                        System
+                    </span>
+                </div>
+                <h5 className="project-preview-title">{project.title}</h5>
+                <div className="project-preview-subrow">
+                    <span className="project-preview-id">{project.id}</span>
+                    {project.stack.slice(0, 2).map((tech) => (
+                        <span key={tech} className="project-preview-tag">{tech}</span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ProjectImage({ image, alt, project }) {
     const [errored, setErrored] = useState(false);
 
     if (errored || !image) {
         return (
-            <div className="project-image-fallback" role="img" aria-label={alt}>
-                <svg viewBox="0 0 64 64" width="40" height="40" aria-hidden="true">
-                    <rect x="8" y="8" width="48" height="48" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <circle cx="22" cy="24" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <path d="M12 46 L26 32 L36 40 L44 30 L56 44" fill="none" stroke="currentColor" strokeWidth="2" />
-                </svg>
-                <span>Preview coming soon</span>
-            </div>
+            <ProjectPreviewFallback
+                project={project}
+                label={`Representational technical preview for ${project.title}, ${project.type}`}
+            />
         );
     }
 
@@ -458,7 +573,11 @@ function ProjectCard({ project, index, interactionsDisabled }) {
             style={{ transitionDelay: `${index * 90}ms` }}
         >
             <div className="project-media">
-                <ProjectImage image={project.image} alt={`Screenshot of the ${project.title} interface`} />
+                <ProjectImage
+                    image={project.image}
+                    alt={`Screenshot of the ${project.title} interface`}
+                    project={project}
+                />
                 <div className="project-media-overlay" aria-hidden="true" />
                 {project.type && <span className="project-media-type">{project.type}</span>}
             </div>
@@ -596,9 +715,10 @@ export default function Skills() {
                 blue wash, per the "premium engineering, not neon demo" brief.
 
                 Performance notes:
-                - Only transform / opacity / border-color / color are ever
-                  transitioned or animated. No filter, backdrop-filter, or
-                  box-shadow *size*, and no layout-property animation.
+                - Only transform / opacity / border-color / color /
+                  background-position are ever transitioned or animated.
+                  No filter, backdrop-filter, or box-shadow *size* animation,
+                  and no layout-property animation.
                 - will-change only switches on during the hover/focus
                   interaction for cards.
                 - 3D tilt, pointer light and cursor-follow effects are fully
@@ -606,6 +726,8 @@ export default function Skills() {
                 - Pointer bounds are cached once per hover session in the JSX
                   (useSurfaceInteraction) — this stylesheet only ever reads
                   --rx/--ry/--mx/--my, it never recalculates layout itself.
+                - The representational preview graphics are static inline
+                  SVG — no extra draw calls, no JS animation loop.
                ================================================================ */}
             <style>{`
                 .skills-section {
@@ -1092,21 +1214,161 @@ export default function Skills() {
                     transform: scale(1.035);
                 }
 
-                .project-image-fallback {
+                /* ---------- premium representational preview (image fallback) ----------
+                   Shown only when a project has no image, or the image fails to load.
+                   Structure: a static SVG schematic (top) + minimal text meta (bottom).
+                   All motion here is transform/opacity/background-position only. */
+
+                .project-preview-fallback {
+                    position: relative;
                     width: 100%;
                     height: 100%;
                     display: flex;
                     flex-direction: column;
+                    justify-content: space-between;
+                    gap: 0.75rem;
+                    padding: 1.35rem 1.5rem 1.25rem;
+                    background:
+                        linear-gradient(155deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.014) 55%),
+                        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.028) 0 2px, transparent 2px 42px);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    overflow: hidden;
+                    transform: scale(1);
+                    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.45s ease;
+                }
+
+                .project-card:hover .project-preview-fallback,
+                .project-card:focus-within .project-preview-fallback {
+                    transform: scale(1.03);
+                    border-color: rgba(255, 255, 255, 0.12);
+                }
+
+                /* soft neutral light reflection — a diagonal sheen that drifts into
+                   view on hover via background-position only (no size/opacity thrash) */
+                .project-preview-fallback::after {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.05) 45%, transparent 60%);
+                    background-size: 220% 220%;
+                    background-position: -60% -60%;
+                    transition: background-position 0.9s ease;
+                    pointer-events: none;
+                }
+
+                .project-card:hover .project-preview-fallback::after,
+                .project-card:focus-within .project-preview-fallback::after {
+                    background-position: 140% 140%;
+                }
+
+                .project-preview-graphic {
+                    position: relative;
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 0.65rem;
-                    color: rgba(156, 163, 175, 0.6);
+                    padding: 0.25rem 0.5rem;
+                    color: rgba(255, 255, 255, 0.5);
+                    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
+                .project-card:hover .project-preview-graphic,
+                .project-card:focus-within .project-preview-graphic {
+                    transform: translateY(-2px) scale(1.015);
+                }
+
+                .project-preview-graphic svg {
+                    max-width: 100%;
+                    max-height: 100%;
+                }
+
+                .preview-accent {
+                    animation: preview-accent-pulse 2.6s ease-in-out infinite;
+                    transform-origin: center;
+                    transform-box: fill-box;
+                }
+
+                @keyframes preview-accent-pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(0.88); }
+                }
+
+                .project-preview-meta {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.45rem;
+                }
+
+                .project-preview-toprow {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.75rem;
+                }
+
+                .project-preview-kicker {
                     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-                    font-size: 0.75rem;
-                    letter-spacing: 0.06em;
-                    background:
-                        linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-                        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 40px);
+                    font-size: 0.64rem;
+                    letter-spacing: 0.18em;
+                    text-transform: uppercase;
+                    color: rgba(156, 163, 175, 0.85);
+                }
+
+                .project-preview-status {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                    font-size: 0.64rem;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: rgba(127, 227, 217, 0.85);
+                }
+
+                .project-preview-dot {
+                    width: 5px;
+                    height: 5px;
+                    border-radius: 999px;
+                    background: #7fe3d9;
+                    animation: pulse-dot 2.2s ease-in-out infinite;
+                }
+
+                .project-preview-title {
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    letter-spacing: -0.005em;
+                    color: rgba(245, 245, 246, 0.92);
+                    line-height: 1.3;
+                }
+
+                .project-preview-subrow {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 0.4rem;
+                }
+
+                .project-preview-id {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: 0.04em;
+                    color: rgba(156, 163, 175, 0.7);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 0.35rem;
+                    padding: 0.18rem 0.4rem;
+                }
+
+                .project-preview-tag {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                    font-size: 0.62rem;
+                    letter-spacing: 0.03em;
+                    color: rgba(209, 213, 219, 0.85);
+                    background: rgba(255, 255, 255, 0.045);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 0.35rem;
+                    padding: 0.18rem 0.45rem;
                 }
 
                 .project-media-type {
@@ -1363,6 +1625,9 @@ export default function Skills() {
                     .core-stack li,
                     .corner,
                     .case-study-chevron,
+                    .project-preview-fallback,
+                    .project-preview-fallback::after,
+                    .project-preview-graphic,
                     .reveal > * {
                         transition: opacity 0.2s ease !important;
                         transform: none !important;
@@ -1379,7 +1644,16 @@ export default function Skills() {
                         transform: none !important;
                     }
 
-                    .signal-dot {
+                    .project-card:hover .project-preview-fallback,
+                    .project-card:focus-within .project-preview-fallback,
+                    .project-card:hover .project-preview-graphic,
+                    .project-card:focus-within .project-preview-graphic {
+                        transform: none !important;
+                    }
+
+                    .signal-dot,
+                    .project-preview-dot,
+                    .preview-accent {
                         animation: none !important;
                     }
 
@@ -1417,6 +1691,17 @@ export default function Skills() {
                         transform: none;
                     }
 
+                    .project-card:hover .project-preview-fallback,
+                    .project-card:focus-within .project-preview-fallback,
+                    .project-card:hover .project-preview-graphic,
+                    .project-card:focus-within .project-preview-graphic {
+                        transform: none;
+                    }
+
+                    .project-preview-fallback::after {
+                        background-position: -60% -60%;
+                    }
+
                     .skill-card,
                     .project-card {
                         backdrop-filter: blur(8px);
@@ -1443,6 +1728,11 @@ export default function Skills() {
                     .project-body { padding: 1.35rem; }
                     .project-card { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
                     .project-foot { flex-wrap: wrap; }
+                    .project-preview-fallback { padding: 1rem 1.1rem 0.95rem; gap: 0.55rem; }
+                    .project-preview-title { font-size: 0.85rem; }
+                    .project-preview-kicker { font-size: 0.58rem; }
+                    .project-preview-id,
+                    .project-preview-tag { font-size: 0.58rem; padding: 0.14rem 0.35rem; }
                 }
             `}</style>
         </section>
